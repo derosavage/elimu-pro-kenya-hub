@@ -1,0 +1,194 @@
+import { useState, type FormEvent } from "react";
+import {
+  ArrowRight, BarChart3, Bell, BookOpenCheck, Bot, Building2, Check,
+  CheckCircle2, ChevronRight, CircleGauge, Clock3, CreditCard, Database,
+  GraduationCap, KeyRound, Landmark, LockKeyhole, Menu, MessageCircle,
+  Phone, Play, ReceiptText, ShieldCheck, Sparkles, TrendingUp, UserRound,
+  UsersRound, WalletCards, X, Zap,
+  type LucideIcon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
+
+const roles = [
+  { name: "Administrators", icon: CircleGauge, title: "Lead your school with clarity", copy: "See enrolment, attendance, fee health and staff activity in one calm command centre.", tasks: ["Live school overview", "Approvals & workflows", "Board-ready reports"], stat: "94%", statLabel: "attendance today" },
+  { name: "Teachers", icon: BookOpenCheck, title: "Teach more. Type less.", copy: "Capture CBC assessments, mark registers and prepare report cards without the paperwork.", tasks: ["CBC rubrics", "Digital attendance", "One-click report cards"], stat: "18", statLabel: "lessons this week" },
+  { name: "Parents", icon: UsersRound, title: "Keep every parent in the loop", copy: "Give families one reliable place for fees, progress updates, notices and school communication.", tasks: ["Fee statements", "Progress snapshots", "SMS & WhatsApp alerts"], stat: "3", statLabel: "new updates" },
+  { name: "Students", icon: GraduationCap, title: "Help every learner stay on track", copy: "Students can access timetables, assignments, results and personalised progress goals.", tasks: ["Learning dashboard", "Results & feedback", "Personal goals"], stat: "82%", statLabel: "goal progress" },
+  { name: "Finance / Bursar", icon: WalletCards, title: "Make every shilling visible", copy: "Reconcile M-Pesa payments automatically and follow outstanding balances without spreadsheets.", tasks: ["Paybill matching", "Instant receipts", "Arrears follow-up"], stat: "KES 1.8M", statLabel: "collected this term" },
+  { name: "AI Assistant", icon: Bot, title: "Spot risks before they become setbacks", copy: "Elimu AI surfaces attendance and performance patterns your team can act on early.", tasks: ["Early warnings", "Smart summaries", "Suggested follow-ups"], stat: "12", statLabel: "learners need attention" },
+] as const;
+
+const features = [
+  { icon: UserRound, title: "Admissions & lifecycle", copy: "From first enquiry to alumni, keep every learner record complete and easy to find." },
+  { icon: BookOpenCheck, title: "CBC & 8-4-4 academics", copy: "Assess competencies, calculate grades and publish polished report cards in minutes." },
+  { icon: CreditCard, title: "M-Pesa fee collection", copy: "Match Paybill and STK Push payments to learners, balances and receipts automatically." },
+  { icon: MessageCircle, title: "Parent communication", copy: "Send targeted SMS and WhatsApp updates by class, route, balance or individual learner." },
+  { icon: Bell, title: "Early-warning insights", copy: "Flag attendance dips and performance changes early with clear, actionable signals." },
+  { icon: BarChart3, title: "Reports that stay ready", copy: "Give leadership accurate dashboards and exportable reports without chasing spreadsheets." },
+];
+
+const faqs = [
+  ["Can Elimu Pro work for a school with limited internet?", "Yes. The platform is designed for practical school environments, with lightweight screens and workflows that minimise data use. Our rollout team also helps you plan reliable access points."],
+  ["Will it work with our existing M-Pesa Paybill?", "Yes. Elimu Pro can connect your existing Paybill and reconcile payments to the correct learner account. STK Push can also make parent payments simpler."],
+  ["Does Elimu Pro support CBC and 8-4-4?", "Yes. Both systems are supported, including competency rubrics, strands, assessments, grading structures and report cards."],
+  ["How long does setup and staff training take?", "Most schools can go live in two to four weeks. Timing depends on your data volume, school structure and the modules you choose."],
+  ["Can different staff members have different access?", "Absolutely. Administrators control role-level permissions so each person only sees the records and actions relevant to their work."],
+  ["Can parents receive messages without a smartphone?", "Yes. Schools can use SMS alongside WhatsApp, so important notices reach parents on any mobile phone."],
+] as const;
+
+const stats = [["120+","schools powered"],["86K+","student records"],["3.2×","faster fee collection"],["100%","CBC ready"]] as const;
+const painPoints: Array<{ icon: LucideIcon; title: string; copy: string }> = [
+  { icon: ReceiptText, title: "Manual fee tracking", copy: "Receipts, ledgers and statements rarely agree." },
+  { icon: BookOpenCheck, title: "CBC paperwork overload", copy: "Teachers lose hours compiling assessments." },
+  { icon: MessageCircle, title: "Broken communication", copy: "Important messages disappear across many channels." },
+];
+const solutions: Array<{ icon: LucideIcon; title: string; copy: string }> = [
+  { icon: Zap, title: "Automatic reconciliation", copy: "Every payment is matched and receipted in real time." },
+  { icon: Sparkles, title: "Reports in a few clicks", copy: "CBC records flow straight into polished report cards." },
+  { icon: Bell, title: "One connected conversation", copy: "Reach the right parents with timely, targeted alerts." },
+];
+const kenyaFeatures: Array<{ icon: LucideIcon; title: string; copy: string }> = [
+  { icon: CreditCard, title: "M-Pesa ready", copy: "STK Push, Paybill collection and automatic fee reconciliation." },
+  { icon: BookOpenCheck, title: "CBC built in", copy: "Competency rubrics, strands and compliant report cards." },
+  { icon: Database, title: "NEMIS & KNEC aligned", copy: "Structured records designed around national requirements." },
+  { icon: ShieldCheck, title: "Data protection", copy: "Processes aligned to the Kenya Data Protection Act." },
+];
+const securityFeatures: Array<{ icon: LucideIcon; title: string; copy: string }> = [
+  { icon: LockKeyhole, title: "Role-level access", copy: "Granular permissions for every team." },
+  { icon: ShieldCheck, title: "Encrypted records", copy: "Protected in transit and at rest." },
+  { icon: Database, title: "Cloud backups", copy: "Automated, reliable recovery." },
+];
+
+function BrandMark({ inverse = false }: { inverse?: boolean }) {
+  return <a href="#top" className="flex items-center gap-3" aria-label="Elimu Pro home">
+    <span className={cn("grid size-10 place-items-center rounded-lg shadow-sm", inverse ? "bg-background text-primary" : "bg-primary text-primary-foreground")}><GraduationCap size={22} /></span>
+    <span className="leading-none"><span className={cn("block font-display text-lg font-bold", inverse ? "text-primary-foreground" : "text-navy")}>Elimu Pro</span><span className={cn("mt-1 block text-[9px] font-extrabold uppercase tracking-[0.18em]", inverse ? "text-primary-foreground/65" : "text-muted-foreground")}>Rose Seko Foundations</span></span>
+  </a>;
+}
+
+function DemoForm({ compact = false, onComplete }: { compact?: boolean; onComplete?: () => void }) {
+  const [sent, setSent] = useState(false);
+  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); setSent(true); onComplete?.(); };
+  if (sent) return <div className={cn("grid place-items-center text-center", compact ? "min-h-72" : "min-h-64")}><div><span className="mx-auto mb-5 grid size-14 place-items-center rounded-full bg-accent text-primary"><Check size={26}/></span><h3 className="text-xl font-bold text-navy">You’re on the list.</h3><p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">Our Kenya team will contact you to arrange a convenient demo time.</p></div></div>;
+  return <form onSubmit={submit} className={cn("grid gap-4", !compact && "md:grid-cols-2")}>
+    <div className={cn(!compact && "md:col-span-2")}><Label htmlFor={compact ? "modal-school" : "school"}>School name</Label><Input id={compact ? "modal-school" : "school"} required placeholder="e.g. Tumaini Academy" className="mt-2 h-12 bg-background" /></div>
+    <div><Label htmlFor={compact ? "modal-students" : "students"}>Student population</Label><Input id={compact ? "modal-students" : "students"} required type="number" min="1" placeholder="e.g. 450" className="mt-2 h-12 bg-background" /></div>
+    <div><Label htmlFor={compact ? "modal-name" : "name"}>Your name</Label><Input id={compact ? "modal-name" : "name"} required placeholder="Full name" className="mt-2 h-12 bg-background" /></div>
+    <div><Label htmlFor={compact ? "modal-phone" : "phone"}>Phone number</Label><Input id={compact ? "modal-phone" : "phone"} required type="tel" placeholder="+254 7XX XXX XXX" className="mt-2 h-12 bg-background" /></div>
+    <div><Label htmlFor={compact ? "modal-email" : "email"}>Work email</Label><Input id={compact ? "modal-email" : "email"} required type="email" placeholder="you@school.ac.ke" className="mt-2 h-12 bg-background" /></div>
+    <Button type="submit" size="lg" className={cn("h-12", !compact && "md:col-span-2")}>Request my free demo <ArrowRight /></Button>
+    <p className={cn("text-center text-xs text-muted-foreground", !compact && "md:col-span-2")}>No commitment. We’ll tailor the walkthrough to your school.</p>
+  </form>;
+}
+
+function DashboardPreview() {
+  return <div id="preview" className="relative mx-auto w-full max-w-[650px]" aria-label="Elimu Pro dashboard preview">
+    <div className="absolute -left-5 top-1/4 hidden rounded-lg border border-border bg-background p-3 shadow-soft lg:block"><div className="flex items-center gap-2 text-xs font-bold text-navy"><span className="grid size-7 place-items-center rounded-md bg-accent text-primary"><Check size={15}/></span>M-Pesa matched</div><p className="mt-1 pl-9 text-[10px] text-muted-foreground">KES 28,500 · Form 3</p></div>
+    <div className="overflow-hidden rounded-xl border border-border/80 bg-background shadow-panel">
+      <div className="grid grid-cols-[66px_1fr] sm:grid-cols-[170px_1fr]">
+        <aside className="min-h-[410px] border-r border-border bg-navy p-3 text-primary-foreground sm:p-5">
+          <div className="flex items-center gap-2"><span className="grid size-8 place-items-center rounded-md bg-sky-strong"><GraduationCap size={17}/></span><span className="hidden text-xs font-bold sm:block">Elimu Pro</span></div>
+          <div className="mt-8 space-y-2">{[CircleGauge, UsersRound, BookOpenCheck, WalletCards, BarChart3].map((Icon, i) => <div key={i} className={cn("flex items-center gap-2 rounded-md p-2.5 text-xs", i === 0 ? "bg-primary-foreground/12 text-primary-foreground" : "text-primary-foreground/55")}><Icon size={16}/><span className="hidden sm:block">{["Overview","Students","Academics","Finance","Reports"][i]}</span></div>)}</div>
+        </aside>
+        <div className="min-w-0 bg-cloud p-4 sm:p-6">
+          <div className="flex items-start justify-between"><div><p className="text-[10px] font-bold uppercase text-muted-foreground">Monday, 20 September</p><h3 className="mt-1 text-lg font-bold text-navy sm:text-xl">Good morning, Ruth</h3></div><span className="grid size-8 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground">RM</span></div>
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">{[["1,248","Students"],["94.2%","Attendance"],["82%","Fees paid"]].map(([v,l],i)=><div key={l} className={cn("rounded-lg border border-border bg-background p-3", i===2 && "col-span-2 sm:col-span-1")}><p className="text-lg font-extrabold text-navy">{v}</p><p className="text-[10px] text-muted-foreground">{l}</p></div>)}</div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-[1.35fr_.65fr]">
+            <div className="rounded-lg border border-border bg-background p-4"><div className="flex items-center justify-between"><p className="text-xs font-bold text-navy">Fee collection</p><span className="text-[10px] font-bold text-success">+18.4%</span></div><div className="mt-5 flex h-24 items-end gap-2">{[45,58,48,72,65,88,78,96].map((h,i)=><span key={i} className={cn("flex-1 rounded-t-sm", i===7 ? "bg-primary" : "bg-sky-soft")} style={{height:`${h}%`}} />)}</div><div className="mt-2 flex justify-between text-[8px] text-muted-foreground"><span>Week 1</span><span>Week 8</span></div></div>
+            <div className="rounded-lg border border-border bg-background p-4"><p className="text-xs font-bold text-navy">Today</p><div className="mt-4 grid place-items-center"><div className="grid size-20 place-items-center rounded-full border-[8px] border-sky-soft border-t-primary"><div className="text-center"><strong className="block text-lg text-navy">94%</strong><span className="text-[8px] text-muted-foreground">present</span></div></div></div></div>
+          </div>
+          <div className="mt-3 flex items-center gap-3 rounded-lg border border-primary/15 bg-accent/70 p-3"><span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-primary-foreground"><Sparkles size={15}/></span><div className="min-w-0"><p className="truncate text-xs font-bold text-navy">Elimu AI found 12 students to review</p><p className="truncate text-[9px] text-muted-foreground">Attendance patterns changed this week</p></div><ChevronRight className="ml-auto shrink-0 text-primary" size={16}/></div>
+        </div>
+      </div>
+    </div>
+  </div>;
+}
+
+export function ElimuProLanding() {
+  const [demoOpen, setDemoOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeRole, setActiveRole] = useState(0);
+  const [annual, setAnnual] = useState(true);
+  const [rollout, setRollout] = useState(0);
+  const role = roles[activeRole] ?? roles[0];
+  const nav = [["Features","#features"],["Roles","#roles"],["Kenya Focus","#kenya"],["Pricing","#pricing"],["FAQ","#faq"]] as const;
+  const scroll = (href: string) => { document.querySelector(href)?.scrollIntoView({ behavior: "smooth" }); setMobileOpen(false); };
+  return <main id="top" className="overflow-hidden bg-background text-foreground">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-border/70 bg-background/85 backdrop-blur-xl">
+      <div className="mx-auto grid h-20 max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 lg:grid-cols-[1fr_auto_1fr] lg:px-8">
+        <BrandMark />
+        <nav className="hidden items-center gap-7 lg:flex" aria-label="Primary navigation">{nav.map(([label, href])=><button key={label} onClick={()=>scroll(href)} className="cursor-pointer border-0 bg-transparent text-sm font-semibold text-muted-foreground transition-colors hover:text-primary">{label}</button>)}</nav>
+        <div className="hidden items-center justify-end gap-2 lg:flex"><Button variant="ghost">Login</Button><Button onClick={()=>setDemoOpen(true)}>Request Demo <ArrowRight /></Button></div>
+        <Button variant="ghost" size="icon" className="lg:hidden" onClick={()=>setMobileOpen(!mobileOpen)} aria-label="Toggle menu">{mobileOpen?<X/>:<Menu/>}</Button>
+      </div>
+      {mobileOpen && <div className="border-t border-border bg-background p-5 lg:hidden"><nav className="grid gap-1">{nav.map(([label, href])=><Button key={label} variant="ghost" className="justify-start" onClick={()=>scroll(href)}>{label}</Button>)}<Button className="mt-3" onClick={()=>{setDemoOpen(true);setMobileOpen(false)}}>Request Demo</Button></nav></div>}
+    </header>
+
+    <section className="relative bg-cloud pb-20 pt-32 lg:pb-28 lg:pt-40">
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky to-transparent" />
+      <div className="mx-auto grid max-w-7xl items-center gap-16 px-5 lg:grid-cols-[.9fr_1.1fr] lg:px-8">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-accent px-3 py-1.5 text-xs font-extrabold text-primary"><span className="size-1.5 rounded-full bg-primary"/> Built in Kenya, for Kenyan schools</div>
+          <h1 className="mt-7 max-w-3xl text-4xl font-bold leading-[1.08] text-navy sm:text-5xl lg:text-[64px]">The Smarter Way to Manage Your School</h1>
+          <p className="mt-6 max-w-xl text-base leading-8 text-muted-foreground sm:text-lg">Bring admissions, CBC reporting, M-Pesa fees, attendance and parent communication into one beautifully connected platform.</p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row"><Button size="lg" className="h-13 px-6" onClick={()=>setDemoOpen(true)}>Book a Free Demo <ArrowRight /></Button><Button size="lg" variant="outline" className="h-13 px-6" onClick={()=>scroll("#preview")}><Play/> Explore Live Preview</Button></div>
+          <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 text-xs font-semibold text-muted-foreground">{["No setup fees","Kenya-based support","Secure cloud hosting"].map(x=><span key={x} className="flex items-center gap-2"><CheckCircle2 className="text-success" size={16}/>{x}</span>)}</div>
+        </div>
+        <DashboardPreview />
+      </div>
+    </section>
+
+    <section className="border-y border-border bg-background"><div className="mx-auto grid max-w-7xl grid-cols-2 px-5 lg:grid-cols-4 lg:px-8">{stats.map(([n,l],i)=><div key={l} className={cn("py-7 text-center lg:py-9", i%2===0&&"border-r border-border", i>1&&"border-t border-border lg:border-t-0", i===1&&"lg:border-r", i===2&&"lg:border-r")}><p className="font-display text-2xl font-bold text-navy sm:text-3xl">{n}</p><p className="mt-1 text-xs font-semibold uppercase text-muted-foreground">{l}</p></div>)}</div></section>
+
+    <section className="py-24 lg:py-32"><div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="mx-auto max-w-2xl text-center"><p className="text-xs font-extrabold uppercase text-primary">One source of truth</p><h2 className="mt-4 text-3xl font-bold text-navy sm:text-4xl">Leave school admin friction behind</h2><p className="mt-4 leading-7 text-muted-foreground">Replace disconnected books, files and chats with workflows your whole school can trust.</p></div>
+      <div className="mt-14 grid overflow-hidden rounded-xl border border-border lg:grid-cols-2">
+        <div className="bg-cloud p-7 sm:p-10"><p className="text-xs font-extrabold uppercase text-muted-foreground">The old way</p><div className="mt-8 space-y-6">{painPoints.map(({icon: Icon,title,copy})=><div key={title} className="flex gap-4"><span className="grid size-10 shrink-0 place-items-center rounded-lg border border-border bg-background text-muted-foreground"><Icon size={19}/></span><div><h3 className="text-sm font-bold text-navy">{title}</h3><p className="mt-1 text-sm leading-6 text-muted-foreground">{copy}</p></div></div>)}</div></div>
+        <div className="relative bg-navy p-7 text-primary-foreground sm:p-10"><p className="text-xs font-extrabold uppercase text-sky">The Elimu Pro way</p><div className="mt-8 space-y-6">{solutions.map(({icon: Icon,title,copy})=><div key={title} className="flex gap-4"><span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary-foreground/10 text-sky"><Icon size={19}/></span><div><h3 className="text-sm font-bold">{title}</h3><p className="mt-1 text-sm leading-6 text-primary-foreground/65">{copy}</p></div></div>)}</div></div>
+      </div>
+    </div></section>
+
+    <section id="roles" className="bg-cloud py-24 lg:py-32"><div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="max-w-2xl"><p className="text-xs font-extrabold uppercase text-primary">Six roles. One school.</p><h2 className="mt-4 text-3xl font-bold text-navy sm:text-4xl">A workspace for everyone</h2><p className="mt-4 leading-7 text-muted-foreground">Every person sees exactly what they need—without losing the big picture.</p></div>
+      <div className="mt-10 flex gap-2 overflow-x-auto pb-3" role="tablist" aria-label="School roles">{roles.map((r,i)=><Button key={r.name} variant={activeRole===i?"default":"outline"} className="h-11 shrink-0" onClick={()=>setActiveRole(i)} role="tab" aria-selected={activeRole===i}><r.icon/>{r.name}</Button>)}</div>
+      <div className="mt-5 grid overflow-hidden rounded-xl border border-border bg-background shadow-soft lg:grid-cols-[.85fr_1.15fr]">
+        <div className="p-7 sm:p-10 lg:p-12"><span className="grid size-12 place-items-center rounded-lg bg-accent text-primary"><role.icon size={23}/></span><h3 className="mt-7 text-2xl font-bold text-navy sm:text-3xl">{role.title}</h3><p className="mt-4 leading-7 text-muted-foreground">{role.copy}</p><ul className="mt-7 space-y-3">{role.tasks.map(t=><li key={t} className="flex items-center gap-3 text-sm font-semibold text-navy"><CheckCircle2 className="text-success" size={18}/>{t}</li>)}</ul>
+        </div>
+        <div className="bg-navy p-5 sm:p-8"><div className="h-full rounded-lg bg-primary-foreground p-5 sm:p-7"><div className="flex items-center justify-between"><div><p className="text-[10px] font-extrabold uppercase text-muted-foreground">{role.name} workspace</p><p className="mt-1 font-display text-lg font-bold text-navy">Today at a glance</p></div><span className="grid size-9 place-items-center rounded-full bg-accent text-primary"><role.icon size={18}/></span></div><div className="mt-6 grid grid-cols-2 gap-3"><div className="rounded-lg bg-cloud p-4"><p className="text-2xl font-extrabold text-navy">{role.stat}</p><p className="mt-1 text-xs text-muted-foreground">{role.statLabel}</p></div><div className="rounded-lg bg-cloud p-4"><p className="text-2xl font-extrabold text-navy">08</p><p className="mt-1 text-xs text-muted-foreground">tasks completed</p></div></div><div className="mt-3 rounded-lg border border-border p-4"><p className="text-xs font-bold text-navy">Activity</p><div className="mt-4 space-y-4">{role.tasks.map((t,i)=><div key={t} className="flex items-center gap-3"><span className={cn("size-2 rounded-full",i===0?"bg-primary":"bg-sky")}/><span className="text-xs text-muted-foreground">{t}</span><span className="ml-auto text-[10px] text-muted-foreground">{i+1}h</span></div>)}</div></div></div></div>
+      </div>
+    </div></section>
+
+    <section id="features" className="py-24 lg:py-32"><div className="mx-auto max-w-7xl px-5 lg:px-8"><div className="max-w-2xl"><p className="text-xs font-extrabold uppercase text-primary">Complete school operations</p><h2 className="mt-4 text-3xl font-bold text-navy sm:text-4xl">Everything works better together</h2></div><div className="mt-12 grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-2 lg:grid-cols-3">{features.map(f=><article key={f.title} className="group bg-background p-7 transition-colors hover:bg-cloud sm:p-8"><span className="grid size-11 place-items-center rounded-lg bg-accent text-primary transition-transform group-hover:-translate-y-1"><f.icon size={21}/></span><h3 className="mt-6 text-lg font-bold text-navy">{f.title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{f.copy}</p></article>)}</div></div></section>
+
+    <section id="kenya" className="bg-navy py-24 text-primary-foreground lg:py-32"><div className="mx-auto grid max-w-7xl gap-14 px-5 lg:grid-cols-[.8fr_1.2fr] lg:px-8"><div><div className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-bold text-sky"><Landmark size={14}/> Built around Kenya</div><h2 className="mt-6 text-3xl font-bold sm:text-4xl">Not adapted for Kenya. Designed for it.</h2><p className="mt-5 leading-7 text-primary-foreground/65">Local workflows are part of the product—not afterthoughts. Your school gets familiar processes backed by responsive support in your time zone.</p><div className="mt-8 flex items-center gap-3 text-sm font-bold"><span className="grid size-10 place-items-center rounded-full bg-primary-foreground/10"><Phone size={18}/></span>Kenya-based onboarding & support</div></div><div className="grid gap-3 sm:grid-cols-2">{kenyaFeatures.map(({icon: Icon,title,copy})=><div key={title} className="rounded-lg border border-primary-foreground/10 bg-primary-foreground/[.06] p-6 backdrop-blur"><Icon className="text-sky" size={23}/><h3 className="mt-5 font-bold">{title}</h3><p className="mt-2 text-sm leading-6 text-primary-foreground/60">{copy}</p></div>)}</div></div></section>
+
+    <section className="py-24 lg:py-32"><div className="mx-auto max-w-7xl px-5 lg:px-8"><div className="mx-auto max-w-2xl text-center"><p className="text-xs font-extrabold uppercase text-primary">A calm transition</p><h2 className="mt-4 text-3xl font-bold text-navy sm:text-4xl">From first call to confident rollout</h2></div><div className="mt-12 grid gap-8 lg:grid-cols-[.7fr_1.3fr]">
+      <div className="space-y-2">{[["01","Discover","We map your school’s people, processes and goals."],["02","Prepare","We organise your data, configure roles and train your team."],["03","Go live","You launch with guided support and clear success checks."]].map(([num,t,c],i)=><button key={num} onClick={()=>setRollout(i)} className={cn("grid w-full cursor-pointer grid-cols-[auto_1fr_auto] items-center gap-4 rounded-lg border p-5 text-left transition-all",rollout===i?"border-primary bg-accent shadow-soft":"border-border bg-background hover:bg-cloud")}><span className="font-display text-xs font-bold text-primary">{num}</span><span><strong className="block text-sm text-navy">{t}</strong><span className="mt-1 block text-xs leading-5 text-muted-foreground">{c}</span></span><ChevronRight className={cn("text-muted-foreground transition-transform",rollout===i&&"translate-x-1 text-primary")} size={18}/></button>)}</div>
+      <div className="relative min-h-80 overflow-hidden rounded-xl bg-cloud p-7 sm:p-10"><div className="absolute right-0 top-0 size-36 rounded-bl-full bg-accent"/><div className="relative"><span className="grid size-12 place-items-center rounded-lg bg-primary text-primary-foreground">{rollout===0?<MessageCircle/>:rollout===1?<Database/>:<TrendingUp/>}</span><p className="mt-8 text-xs font-bold uppercase text-primary">Step {rollout+1}</p><h3 className="mt-3 text-2xl font-bold text-navy">{["A plan shaped around your school","Your system, ready for real work","Momentum from your very first day"][rollout] ?? "A plan shaped around your school"}</h3><p className="mt-4 max-w-xl leading-7 text-muted-foreground">{["A focused discovery session gives our team the context to recommend the right modules, migration plan and rollout timeline.","We securely prepare learner records, academic structures, fee balances and user access—then train each team in the work they do every day.","Launch week includes hands-on support, progress checks and practical help so staff can build confidence quickly."][rollout] ?? "A focused discovery session gives our team the context to recommend the right modules, migration plan and rollout timeline."}</p><div className="mt-8 flex items-center gap-3 text-sm font-bold text-navy"><Clock3 className="text-primary" size={19}/>{["60-minute discovery call","2–4 week guided setup","Ongoing local support"][rollout] ?? "60-minute discovery call"}</div></div></div>
+    </div></div></section>
+
+    <section className="bg-cloud py-20"><div className="mx-auto max-w-7xl px-5 lg:px-8"><div className="grid gap-10 lg:grid-cols-[.65fr_1.35fr] lg:items-center"><div><p className="text-xs font-extrabold uppercase text-primary">Secure by design</p><h2 className="mt-4 text-3xl font-bold text-navy">Your school’s trust comes first.</h2><p className="mt-4 text-sm leading-7 text-muted-foreground">Sensitive records are protected at every level, while authorised teams keep the access they need.</p></div><div className="grid gap-3 sm:grid-cols-3">{securityFeatures.map(({icon: Icon,title,copy})=><div key={title} className="rounded-lg border border-border bg-background p-6"><Icon className="text-primary"/><h3 className="mt-5 text-sm font-bold text-navy">{title}</h3><p className="mt-2 text-xs leading-5 text-muted-foreground">{copy}</p></div>)}</div></div></div></section>
+
+    <section id="pricing" className="py-24 lg:py-32"><div className="mx-auto max-w-7xl px-5 lg:px-8"><div className="mx-auto max-w-2xl text-center"><p className="text-xs font-extrabold uppercase text-primary">Clear, school-friendly pricing</p><h2 className="mt-4 text-3xl font-bold text-navy sm:text-4xl">Choose the fit. Grow when ready.</h2><div className="mt-7 inline-flex rounded-lg bg-cloud p-1"><Button size="sm" variant={!annual?"default":"ghost"} onClick={()=>setAnnual(false)}>Monthly</Button><Button size="sm" variant={annual?"default":"ghost"} onClick={()=>setAnnual(true)}>Annual <span className="text-[10px] opacity-70">Save 15%</span></Button></div></div>
+    <div className="mt-12 grid gap-5 lg:grid-cols-3">{[
+      {name:"Day School Starter",desc:"For growing day schools ready to replace manual admin.",price:annual?"18,700":"22,000",items:["Up to 500 students","Academics & attendance","M-Pesa fee tracking","SMS parent alerts"]},
+      {name:"Boarding Academy Pro",desc:"For schools that need complete operational visibility.",price:annual?"34,000":"40,000",items:["Up to 1,200 students","All Starter features","Boarding & welfare","AI early warnings"],featured:true},
+      {name:"Institution / Group",desc:"For large schools, campuses and education networks.",price:"Custom",items:["Unlimited campuses","Central group reporting","Advanced permissions","Dedicated success lead"]},
+    ].map(p=><article key={p.name} className={cn("relative rounded-xl border p-7",p.featured?"border-primary bg-navy text-primary-foreground shadow-panel":"border-border bg-background")}>
+      {p.featured&&<span className="absolute right-5 top-5 rounded-full bg-sky px-2.5 py-1 text-[10px] font-extrabold uppercase text-navy">Most popular</span>}<h3 className="text-xl font-bold">{p.name}</h3><p className={cn("mt-3 min-h-12 text-sm leading-6",p.featured?"text-primary-foreground/60":"text-muted-foreground")}>{p.desc}</p><div className="mt-7"><span className="font-display text-3xl font-bold">{p.price==="Custom"?p.price:`KES ${p.price}`}</span>{p.price!=="Custom"&&<span className={cn("text-xs",p.featured?"text-primary-foreground/50":"text-muted-foreground")}> / month</span>}</div><ul className="my-7 space-y-3">{p.items.map(i=><li key={i} className="flex gap-2 text-sm"><CheckCircle2 className={p.featured?"text-sky":"text-success"} size={17}/>{i}</li>)}</ul><Button variant={p.featured?"secondary":"outline"} className="w-full" onClick={()=>setDemoOpen(true)}>{p.price==="Custom"?"Talk to our team":"Request demo"}</Button>
+    </article>)}</div><p className="mt-6 text-center text-xs text-muted-foreground"><CreditCard className="mr-2 inline" size={14}/>Simple M-Pesa billing available. Final pricing depends on enrolment and selected modules.</p></div></section>
+
+    <section id="faq" className="bg-cloud py-24"><div className="mx-auto grid max-w-6xl gap-12 px-5 lg:grid-cols-[.65fr_1.35fr] lg:px-8"><div><p className="text-xs font-extrabold uppercase text-primary">Questions, answered</p><h2 className="mt-4 text-3xl font-bold text-navy">What school leaders ask us</h2><p className="mt-4 text-sm leading-7 text-muted-foreground">Need a specific answer? Our Kenya team is ready to help.</p><Button variant="outline" className="mt-6" onClick={()=>setDemoOpen(true)}>Ask our team <ArrowRight/></Button></div><Accordion type="single" collapsible className="rounded-xl border border-border bg-background px-5 sm:px-7">{faqs.map(([q,a],i)=><AccordionItem key={q} value={`item-${i}`}><AccordionTrigger className="py-6 text-left text-sm font-bold text-navy sm:text-base">{q}</AccordionTrigger><AccordionContent className="pb-6 pr-8 leading-7 text-muted-foreground">{a}</AccordionContent></AccordionItem>)}</Accordion></div></section>
+
+    <section className="bg-background py-24 lg:py-32"><div className="mx-auto max-w-6xl px-5 lg:px-8"><div className="grid overflow-hidden rounded-xl border border-border shadow-panel lg:grid-cols-[.85fr_1.15fr]"><div className="bg-navy p-8 text-primary-foreground sm:p-12"><p className="text-xs font-extrabold uppercase text-sky">See it in your school</p><h2 className="mt-5 text-3xl font-bold">A better school day starts here.</h2><p className="mt-5 leading-7 text-primary-foreground/65">Tell us a little about your school. We’ll show you the workflows that matter most to your team.</p><div className="mt-10 space-y-4 text-sm">{["A tailored 30-minute walkthrough","Clear answers on migration and setup","No pressure, no obligation"].map(x=><p key={x} className="flex items-center gap-3"><CheckCircle2 className="text-sky" size={18}/>{x}</p>)}</div></div><div className="bg-cloud p-8 sm:p-12"><DemoForm /></div></div></div></section>
+
+    <footer className="bg-navy py-14 text-primary-foreground"><div className="mx-auto max-w-7xl px-5 lg:px-8"><div className="grid gap-10 border-b border-primary-foreground/10 pb-12 lg:grid-cols-[1.5fr_1fr_1fr]"><div><BrandMark inverse/><p className="mt-5 max-w-sm text-sm leading-6 text-primary-foreground/55">Empowering Kenyan schools with clearer operations, stronger connections and better learner outcomes.</p></div><div><p className="text-xs font-extrabold uppercase text-sky">Explore</p><div className="mt-5 grid grid-cols-2 gap-3">{nav.map(([l,h])=><button key={l} onClick={()=>scroll(h)} className="cursor-pointer text-left text-sm text-primary-foreground/60 hover:text-primary-foreground">{l}</button>)}</div></div><div><p className="text-xs font-extrabold uppercase text-sky">Kenya support</p><p className="mt-5 text-sm text-primary-foreground/60">Nairobi, Kenya</p><a href="mailto:hello@elimupro.co.ke" className="mt-3 block text-sm hover:text-sky">hello@elimupro.co.ke</a><div className="mt-5 flex gap-3"><a href="https://www.linkedin.com" aria-label="LinkedIn" className="grid size-9 place-items-center rounded-md bg-primary-foreground/10 text-xs font-bold hover:bg-primary-foreground/20">in</a><a href="https://www.facebook.com" aria-label="Facebook" className="grid size-9 place-items-center rounded-md bg-primary-foreground/10 text-xs font-bold hover:bg-primary-foreground/20">f</a><a href="https://www.instagram.com" aria-label="Instagram" className="grid size-9 place-items-center rounded-md bg-primary-foreground/10 text-xs font-bold hover:bg-primary-foreground/20">ig</a></div></div></div><div className="flex flex-col gap-3 pt-7 text-xs text-primary-foreground/40 sm:flex-row sm:items-center sm:justify-between"><p>© 2026 Elimu Pro. An initiative of Rose Seko Foundations.</p><div className="flex gap-5"><a href="#">Privacy</a><a href="#">Terms</a></div></div></div></footer>
+
+    <Dialog open={demoOpen} onOpenChange={setDemoOpen}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl"><DialogHeader><DialogTitle className="text-2xl text-navy">Book your free school demo</DialogTitle><DialogDescription>See how Elimu Pro fits your school’s exact workflows.</DialogDescription></DialogHeader><div className="mt-3"><DemoForm compact /></div></DialogContent></Dialog>
+  </main>;
+}

@@ -1,6 +1,6 @@
 # Database
 
-Generated from `backend/app/models/` into `database/schema.sql` (20 tables, InnoDB, utf8mb4). No attendance tables exist.
+Generated from `backend/app/models/` into `database/schema.sql` (21 tables, InnoDB, utf8mb4). No attendance tables exist.
 
 | Group | Tables |
 |---|---|
@@ -8,10 +8,11 @@ Generated from `backend/app/models/` into `database/schema.sql` (20 tables, Inno
 | Academic structure | `academic_years`, `terms`, `classes`, `streams`, `subjects`, `grade_bands` (school-configurable grading) |
 | Learners | `students`, `guardians`, `student_applications`, `application_documents` |
 | Assessment | `exams`, `exam_results`, `timetable_entries` |
+| Staff | `teacher_assignments` (teacher user x class x subject; unique per triple; drives every teacher permission) |
 | Finance & comms | `fee_structures`, `student_fees`, `payments`, `announcements` |
 
 Rules: every school-owned table has `school_id` (indexed). Uniqueness is per school: `(school_id, admission_number)`, `(school_id, name)` for classes and
 subjects, `(school_id, reference)` and `(school_id, receipt_no)` for payments. One application per applicant user (`applicant_user_id` unique);
 `student_applications.student_id` and `students.user_id` link an application, its account and the enrolled student record.
-Not yet modelled: teachers/staff, parents (guardians have an unused `user_id`), report cards, library, inventory, boarding, transport, notifications, messages,
-student-subject and teacher-subject links.
+Not yet modelled: staff other than teachers, parents (`guardians.user_id` links a guardian row to a parent `users` account; a parent sees exactly the students whose guardian rows point at them), report cards, library, inventory, boarding, transport, notifications, messages,
+student-subject links.

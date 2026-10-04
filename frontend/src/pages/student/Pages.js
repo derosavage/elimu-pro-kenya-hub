@@ -10,14 +10,14 @@ import { DAYS, fmtDate, money } from '../../utils/format';
 function Page({ title, req, children, actions }) {
   if (req.loading) return <Loading />;
   if (req.error) return <ErrorState error={req.error} onRetry={req.reload} />;
-  return <div className="stack"><div className="row between"><h1>{title}</h1>{actions}</div>{children(req.data)}</div>;
+  return <div className="stack"><div className="row between">{title ? <h1>{title}</h1> : <span />}{actions}</div>{children(req.data)}</div>;
 }
 
-export function Results() {
-  const req = useFetch('/students/me/results');
+export function Results({ base = '/students/me', title = 'My results' }) {
+  const req = useFetch(`${base}/results`);
   const [sel, setSel] = useState(0);
   return (
-    <Page title="My results" req={req} actions={<button className="btn secondary small no-print" onClick={() => window.print()}><Icon name="print" size={16} /> Print</button>}>
+    <Page title={title} req={req} actions={<button className="btn secondary small no-print" onClick={() => window.print()}><Icon name="print" size={16} /> Print</button>}>
       {(exams) => {
         if (!exams.length) return <div className="card"><Empty title="No results yet">Your exam results will appear here once your teachers publish them.</Empty></div>;
         const e = exams[Math.min(sel, exams.length - 1)];
@@ -38,11 +38,11 @@ export function Results() {
   );
 }
 
-export function Timetable() {
-  const req = useFetch('/students/me/timetable');
+export function Timetable({ base = '/students/me', title = 'Timetable' }) {
+  const req = useFetch(`${base}/timetable`);
   const [day, setDay] = useState(Math.min(Math.max(new Date().getDay(), 1), 5));
   return (
-    <Page title="Timetable" req={req}>
+    <Page title={title} req={req}>
       {(tt) => (<>
         <div className="tabs">{Object.entries(DAYS).map(([k, v]) => <button key={k} className={`tab ${Number(k) === day ? 'active' : ''}`} onClick={() => setDay(Number(k))}>{v}</button>)}</div>
         <div className="card">{(tt[day] || []).length === 0 ? <Empty title="No lessons">Nothing is scheduled for {DAYS[day]}.</Empty> :
@@ -53,10 +53,10 @@ export function Timetable() {
   );
 }
 
-export function Fees() {
-  const req = useFetch('/students/me/fees');
+export function Fees({ base = '/students/me', title = 'Fees' }) {
+  const req = useFetch(`${base}/fees`);
   return (
-    <Page title="Fees" req={req}>
+    <Page title={title} req={req}>
       {(f) => (<>
         <div className="cards">
           <div className="card stat"><div className="label">Total fees</div><div className="value">{money(f.total_due)}</div></div>

@@ -8,6 +8,8 @@ Multi-school SaaS: every record belongs to a school and the backend enforces tha
 
 ## Product purpose and target users
 - **Students / learners** create their own account, apply for admission, then see a personal dashboard (results, timetable, fees, announcements).
+- **Teachers** see only their assigned classes, view class lists, create exams and enter results (learners see marks immediately).
+- **Parents / guardians** log in to see each linked child's results, fee balance and payments, timetable and school news (one login can cover several children).
 - **School administrators** (admin, principal, deputy) review applications, enrol students, manage classes, streams, subjects, fees and announcements.
 - **Bursars** record payments and view balances.
 - **Platform super admin** creates schools and activates/deactivates them.
@@ -21,15 +23,14 @@ All screens read the same database rows.
 
 ## What is built and what is not
 **Built and covered by automated tests (backend):** authentication (JWT, bcrypt), roles, school isolation, student signup, admissions workflow,
-student dashboard/profile/results/fees/timetable/announcements, admin student management, classes/streams/subjects, exams and result entry,
+student dashboard/profile/results/fees/timetable/announcements, teacher accounts and class/subject assignments, teacher dashboard, class lists and result entry (permission-checked per class and subject), parent accounts linked to children through guardians, parent dashboard and per-child results/fees/timetable, admin student management, classes/streams/subjects, exams and result entry,
 fee structures/assignment/manual payments, announcements, super-admin school management.
 
 **Built, compiled, but not exercised in a browser or covered by frontend tests:** the React app (public pages, signup, application form,
-student portal, admin portal, platform page, PWA manifest + service worker).
+student portal, admin portal incl. Teachers and Parents pages, teacher portal incl. mark-entry screen, parent portal, platform page, PWA manifest + service worker).
 
-**Not built yet (no placeholder pages were created for them):** teacher accounts/dashboard, parent/guardian accounts/dashboard, report cards
-(students can print the results page from the browser), subject assignment per student/teacher, timetable *editor UI* (API exists), exam/result
-entry *UI* (API exists), messages/notifications, library, inventory, boarding, transport, reports and CSV/PDF export, password-reset flow, document
+**Not built yet (no placeholder pages were created for them):** report cards
+(students can print the results page from the browser), per-student subject assignment, teacher timetable view, class-teacher-specific permissions (the `class_teacher` role currently behaves like `teacher`), timetable *editor UI* (API exists), admin-side result entry and exam management UI (teachers have it; the API allows admins), messages/notifications, library, inventory, boarding, transport, reports and CSV/PDF export, password-reset flow, document
 upload (table exists), M-Pesa callback handling, rate limiting, database migrations (schema is provided as SQL and `create_all`), `seed.sql`
 (demo data is loaded with `backend/seed.py` because passwords must be hashed).
 
@@ -78,7 +79,7 @@ Frontend (`frontend/.env`): `REACT_APP_API_URL`. No `.env` file is shipped; neve
 ```bash
 cd backend && pytest -q
 ```
-The suite (20 tests) runs against in-memory SQLite. It was executed and passed while this project was created; it has **not** been run against MySQL.
+The suite (43 tests) runs against in-memory SQLite. It was executed and passed while this project was created; it has **not** been run against MySQL.
 There are no frontend tests.
 
 ## Demo accounts (created by `seed.py`, demo data only)
@@ -89,10 +90,13 @@ Password for all: `Demo@1234`
 | Super admin | super@elimupro.demo |
 | School admin (Mwangaza Academy) | admin@mwangaza.demo |
 | Bursar | bursar@mwangaza.demo |
+| Teacher (Grade 7 Maths, English, Science) | teacher@mwangaza.demo |
+| Parent of Achieng and Wekesa (two children) | mary.otieno@mwangaza.demo |
+| Parent of Baraka | james.mwangi@mwangaza.demo |
 | Student (enrolled) | achieng@mwangaza.demo |
 | Second school admin (isolation demo) | admin@tumaini.demo |
 
-Two applicants (kiprono@ / wanjiru@mwangaza.demo) are waiting for review. **Never seed or keep demo accounts in production.**
+Three applicants (kiprono@, wanjiru@, zawadi@mwangaza.demo; the last is already "under review") are waiting in the admin list. To wipe and reload the demo data on a development database run `python reset_demo.py` in `backend/`. **Never seed or keep demo accounts in production.**
 
 ## API overview
 See [docs/API.md](docs/API.md). Base path `/api`; responses are `{success, data, message?, meta?}` or `{success:false, message, errors?}`.

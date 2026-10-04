@@ -36,3 +36,18 @@ POST `/payments/mpesa/stk-push` (503 unless configured; untested).
 
 ## Announcements
 GET `/announcements` (students see only their audience/class), POST `/announcements` (admin).
+
+## Teachers
+Admin/principal/deputy: GET/POST `/teachers` (`first_name, last_name, email, password`, optional `phone`, `role` teacher|class_teacher), PATCH `/teachers/<id>` (`is_active`, `role`),
+POST `/teachers/<id>/assignments` (`class_id, subject_id`), DELETE `/teachers/<id>/assignments/<assignment_id>`.
+Teacher: GET `/teacher/dashboard`, `/teacher/classes`, `/teacher/classes/<class_id>/students` (403 if not assigned), `/teacher/announcements`.
+Teachers are also allowed on: GET `/students` and `/students/<id>` (only learners in assigned classes, no fee data), GET/POST `/exams` (assigned classes only),
+GET `/results?exam_id=&subject_id=` (mark sheet) and POST `/results` (403 unless assigned to that class **and** subject; every student must be in the exam's class;
+marks must be 0..exam max; duplicate students in one submission are rejected; the whole submission is rejected if any entry is invalid).
+
+## Parents
+Admin/principal/deputy: GET `/parents` (parent logins with linked children), POST `/students/<id>/parent-account`
+(`guardian_id`, `email`, `password`): creates a parent login for one of the student's guardians, or, if `email` already belongs to a parent of the same school,
+links the guardian to that account (password not needed) so siblings share a login. 409 if the guardian already has a login or the email belongs to another role/school.
+Parent: GET `/parent/dashboard`, `/parent/children/<student_id>` (+ `/results`, `/fees`, `/timetable`), `/parent/announcements` (audiences "all" and "parents", class-targeted notices only for classes of their children).
+A parent can reach only children linked through a guardian record; any other student id (including other schools') returns 404. Parents get 403 on every staff, teacher and student endpoint.

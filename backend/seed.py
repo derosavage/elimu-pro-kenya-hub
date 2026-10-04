@@ -15,4 +15,5 @@ with app.app_context():
     print("  School admin: admin@mwangaza.demo")
     print("  Bursar      : bursar@mwangaza.demo")
     print("  Teacher     : teacher@mwangaza.demo")
+    print("  Parent      : mary.otieno@mwangaza.demo (2 children), james.mwangi@mwangaza.demo")
     print("  Student     : achieng@mwangaza.demo")

@@ -6,6 +6,7 @@ from app.seed import seed_demo, DEMO_PASSWORD
 
 app = create_app()
 with app.app_context():
+    db.create_all()
     real = School.query.filter_by(is_demo=False).count()
     if real:
         raise SystemExit(f"{real} non-demo school(s) found; refusing to wipe the database.")

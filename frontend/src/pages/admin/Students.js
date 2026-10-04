@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useFetch } from '../../hooks/useFetch';
 import { api } from '../../services/api';
-import { Alert, Button, Empty, ErrorState, Loading, Modal, Pager } from '../../components/ui';
+import { Alert, Button, Empty, ErrorState, Field, Loading, Modal, Pager } from '../../components/ui';
 import { fmtDate, initials, money } from '../../utils/format';
 
 export function Students() {
@@ -34,6 +34,10 @@ export function StudentDetail() {
   const [confirm, setConfirm] = useState(null);
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pf, setPf] = useState(null);           // guardian being given a parent login
+  const [pForm, setPForm] = useState({ email: '', password: '' });
+  const [pErr, setPErr] = useState({});
+  const [pMsg, setPMsg] = useState('');
   if (st.loading) return <Loading />;
   if (st.error) return <ErrorState error={st.error} onRetry={st.reload} />;
   const s = st.data;
@@ -47,7 +51,12 @@ export function StudentDetail() {
       <Link to="/admin/students" className="small">← Students</Link>
       <div className="greet"><div className="avatar" style={{ width: 56, height: 56 }}>{initials(s.full_name)}</div><div><h1>{s.full_name}</h1><span className="muted small">Adm No. {s.admission_number} · {s.status}</span></div></div>
       <div className="card">{row('Class', `${s.class || '-'}${s.stream ? ` ${s.stream}` : ''}`)}{row('Date of birth', fmtDate(s.date_of_birth))}{row('Gender', s.gender)}{row('County', s.county)}{row('Previous school', s.previous_school)}{row('Phone', s.phone)}{row('Email', s.email)}{row('Admitted', fmtDate(s.admitted_on))}</div>
-      <div className="card"><h3>Guardians</h3>{s.guardians.map((g) => <div key={g.id} className="timeline-row"><div className="grow"><b>{g.full_name}</b><div className="small muted">{g.relationship || 'Emergency contact'}</div></div><div>{g.phone}</div></div>)}</div>
+      <div className="card"><h3>Guardians</h3>{s.guardians.map((g) => (
+        <div key={g.id} className="timeline-row" style={{ alignItems: 'center' }}>
+          <div className="grow"><b>{g.full_name}</b><div className="small muted">{g.relationship || 'Emergency contact'} · {g.phone}</div></div>
+          {g.has_account ? <span className="badge green">Parent login</span>
+            : <Button variant="secondary" className="small no-print" onClick={() => { setPForm({ email: g.email || '', password: '' }); setPErr({}); setPMsg(''); setPf(g); }}>Create login</Button>}
+        </div>))}</div>
       {s.fees && <div className="card"><h3>Fees</h3>{row('Total due', money(s.fees.total_due))}{row('Paid', money(s.fees.total_paid))}{row('Balance', money(s.fees.balance))}</div>}
       {s.results && <div className="card"><h3>Academic history</h3>{s.results.length === 0 ? <p className="muted small">No results recorded.</p> : s.results.map((r) => <div key={r.exam_id} className="timeline-row"><div className="grow">{r.exam} ({r.term} {r.year})</div><b>{r.mean_grade} · {r.mean}%</b></div>)}</div>}
       <div className="row wrap no-print">
@@ -57,6 +66,19 @@ export function StudentDetail() {
           <Button variant="danger" onClick={() => setConfirm({ status: 'inactive', label: 'deactivate' })}>Deactivate</Button></>
           : <Button onClick={() => setConfirm({ status: 'active', label: 'reactivate' })}>Reactivate</Button>}
       </div>
+      {pf && (
+        <Modal title={`Parent login: ${pf.full_name}`} onClose={() => setPf(null)}>
+          <p className="small muted">Lets this guardian log in to see {s.first_name}'s results, fees and timetable. If they already have a login (for example for another child), enter that email and leave the password empty to link {s.first_name} to it.</p>
+          <Alert type="error">{pMsg}</Alert>
+          <Field label="Email" name="pemail" type="email" required value={pForm.email} onChange={(e) => setPForm({ ...pForm, email: e.target.value })} error={pErr.email} />
+          <Field label="Temporary password (new accounts only)" name="ppass" type="password" value={pForm.password} onChange={(e) => setPForm({ ...pForm, password: e.target.value })} error={pErr.password} />
+          <Button block loading={busy} disabled={!pForm.email} onClick={async () => {
+            setBusy(true); setPErr({}); setPMsg('');
+            try { await api.post(`/students/${id}/parent-account`, { guardian_id: pf.id, email: pForm.email, password: pForm.password || undefined }); setPf(null); st.reload(); }
+            catch (e) { setPErr(e.errors || {}); setPMsg(e.message); } finally { setBusy(false); }
+          }}>Save</Button>
+        </Modal>
+      )}
       {confirm && <Modal title="Are you sure?" onClose={() => setConfirm(null)}>
         <p>You are about to <b>{confirm.label}</b> {s.full_name}. {confirm.status !== 'active' ? 'Their login will be disabled.' : ''}</p><Alert type="error">{msg}</Alert>
         <div className="row"><Button variant="secondary" onClick={() => setConfirm(null)}>Cancel</Button><Button variant={confirm.status === 'inactive' ? 'danger' : ''} loading={busy} onClick={change}>Confirm</Button></div></Modal>}

@@ -218,7 +218,7 @@ def test_admin_student_management_and_overview(client, app, admin):
     # transferred student's login is disabled
     assert client.post("/api/auth/login", json={"email": "achieng@mwangaza.demo", "password": "Demo@1234"}).status_code == 403
     o = client.get("/api/schools/overview", headers=admin).get_json()["data"]
-    assert o["total_students"] == 2 and o["pending_applications"] == 2 and o["is_demo"] is True
+    assert o["total_students"] == 3 and o["pending_applications"] == 3 and o["new_applications"] == 2 and o["is_demo"] is True
 
 
 def test_results_entry_fees_payment_and_announcements(client, app, admin):

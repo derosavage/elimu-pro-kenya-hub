@@ -60,7 +60,8 @@ class Guardian(db.Model):
 
     def to_dict(self):
         return {"id": self.id, "full_name": self.full_name, "relationship": self.relationship_type,
-                "phone": self.phone, "email": self.email, "is_emergency_contact": self.is_emergency_contact}
+                "phone": self.phone, "email": self.email, "is_emergency_contact": self.is_emergency_contact,
+                "has_account": self.user_id is not None}
 
 
 class StudentApplication(db.Model):

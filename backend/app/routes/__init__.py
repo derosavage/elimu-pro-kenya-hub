@@ -7,5 +7,6 @@ def register_blueprints(app):
     from .finance import bp as finance
     from .announcements import bp as announcements
     from .teachers import bp as teachers
-    for bp in (auth, schools, admissions, students, academics, finance, announcements, teachers):
+    from .parents import bp as parents
+    for bp in (auth, schools, admissions, students, academics, finance, announcements, teachers, parents):
         app.register_blueprint(bp)

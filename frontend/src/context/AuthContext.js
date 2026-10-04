@@ -46,6 +46,7 @@ export const homeFor = (user) => {
   if (!user) return '/login';
   if (user.role === 'student') return user.is_enrolled ? '/student' : '/student/application';
   if (user.role === 'super_admin') return '/platform';
+  if (user.role === 'parent') return '/parent';
   if (user.role === 'teacher' || user.role === 'class_teacher') return '/teacher';
   if (user.role === 'bursar') return '/admin/fees';
   return '/admin';

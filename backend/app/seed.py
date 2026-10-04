@@ -10,6 +10,7 @@ from .models import (School, User, AcademicYear, Term, SchoolClass, Stream, Subj
                      Student, Guardian, StudentApplication, FeeStructure, StudentFee, Payment, Announcement,
                      TimetableEntry, TeacherAssignment)
 from .services import admissions as adm
+from .models import Guardian as _Guardian  # noqa: E402
 
 DEMO_PASSWORD = "Demo@1234"
 
@@ -55,14 +56,14 @@ def _school(name, slug, county, prefix, stype):
     return s, terms, classes, subjects
 
 
-def _enrol(school, email, first, last, klass, stream, guardian, phone):
+def _enrol(school, email, first, last, klass, stream, guardian, phone, gphone="0722000111", dob="2012-05-14", gender="female"):
     u = _user(school, email, first, last, "student", phone)
     a = adm.create_draft(u)
     db.session.flush()
-    adm.apply_updates(a, {"date_of_birth": "2012-05-14", "gender": "female", "nationality": "Kenyan",
+    adm.apply_updates(a, {"date_of_birth": dob, "gender": gender, "nationality": "Kenyan",
                           "applying_class_id": klass.id, "guardian_name": guardian,
-                          "guardian_relationship": "Mother", "guardian_phone": "0722000111",
-                          "emergency_contact_name": guardian, "emergency_contact_phone": "0722000111"})
+                          "guardian_relationship": "Mother", "guardian_phone": gphone,
+                          "emergency_contact_name": guardian, "emergency_contact_phone": gphone})
     adm.submit(a)
     st, _ = adm.enrol(a, school, None, klass.id, stream.id if stream else None)
     return st
@@ -78,15 +79,23 @@ def seed_demo():
     for sub in ("Mathematics", "English", "Integrated Science"):
         db.session.add(TeacherAssignment(school_id=s1.id, teacher_id=teacher.id, class_id=cls1["Grade 7"].id,
                                          subject_id=subj1[sub].id))
-    achieng = _enrol(s1, "achieng@mwangaza.demo", "Achieng", "Otieno", cls1["Grade 7"],
-                     Stream.query.filter_by(class_id=cls1["Grade 7"].id, name="East").first(),
-                     "Mary Otieno", "0711223344")
-    baraka = _enrol(s1, "baraka@mwangaza.demo", "Baraka", "Mwangi", cls1["Grade 7"],
-                    Stream.query.filter_by(class_id=cls1["Grade 7"].id, name="East").first(),
-                    "James Mwangi", "0700112233")
+    east = Stream.query.filter_by(class_id=cls1["Grade 7"].id, name="East").first()
+    achieng = _enrol(s1, "achieng@mwangaza.demo", "Achieng", "Otieno", cls1["Grade 7"], east,
+                     "Mary Otieno", "0711223344", gphone="0711556677")
+    baraka = _enrol(s1, "baraka@mwangaza.demo", "Baraka", "Mwangi", cls1["Grade 7"], east,
+                    "James Mwangi", "0700112233", gphone="0700112299", dob="2012-08-21", gender="male")
+    wekesa = _enrol(s1, "wekesa@mwangaza.demo", "Wekesa", "Otieno", cls1["Grade 4"], None,
+                    "Mary Otieno", "0711223355", gphone="0711556677", dob="2016-09-03", gender="male")
+
+    # Parent logins. Mary has TWO children (Achieng, Wekesa) on one account, which demonstrates sibling linking.
+    mary = _user(s1, "mary.otieno@mwangaza.demo", "Mary", "Otieno", "parent", "0711556677")
+    james = _user(s1, "james.mwangi@mwangaza.demo", "James", "Mwangi", "parent", "0700112299")
+    for parent, kids in ((mary, (achieng, wekesa)), (james, (baraka,))):
+        for kid in kids:
+            _Guardian.query.filter_by(student_id=kid.id, is_emergency_contact=False).first().user_id = parent.id
 
     # Pending applications for the admin to review
-    for i, (f, l) in enumerate([("Kiprono", "Koech"), ("Wanjiru", "Kamau")]):
+    for i, (f, l) in enumerate([("Kiprono", "Koech"), ("Wanjiru", "Kamau"), ("Zawadi", "Chebet")]):
         u = _user(s1, f"{f.lower()}@mwangaza.demo", f, l, "student", f"0733000{i}00"[:10])
         a = adm.create_draft(u)
         db.session.flush()
@@ -96,6 +105,8 @@ def seed_demo():
                               "guardian_phone": "0722555666", "emergency_contact_name": "Aunt",
                               "emergency_contact_phone": "0722777888"})
         adm.submit(a)
+        if f == "Zawadi":
+            a.status = "under_review"
 
     # Fees
     t3 = terms1[2]
@@ -103,12 +114,14 @@ def seed_demo():
     lunch = FeeStructure(school_id=s1.id, term_id=t3.id, class_id=None, name="Lunch programme", amount=4500)
     db.session.add_all([tuition, lunch])
     db.session.flush()
-    for st in (achieng, baraka):
+    for st in (achieng, baraka, wekesa):
         for fs in (tuition, lunch):
             db.session.add(StudentFee(school_id=s1.id, student_id=st.id, term_id=t3.id, fee_structure_id=fs.id,
                                       description=fs.name, amount_due=fs.amount))
     db.session.add(Payment(school_id=s1.id, student_id=achieng.id, term_id=t3.id, amount=15000, method="mpesa",
                            reference="SLK8D2F1QX", receipt_no="RCT-2026-00001", recorded_by=admin1.id))
+    db.session.add(Payment(school_id=s1.id, student_id=wekesa.id, term_id=t3.id, amount=22500, method="bank",
+                           reference="KCB-77120934", receipt_no="RCT-2026-00002", recorded_by=admin1.id))
 
     # Exam + results
     exam = Exam(school_id=s1.id, term_id=terms1[1].id, class_id=cls1["Grade 7"].id, name="End of Term 2", max_score=100)
@@ -117,6 +130,12 @@ def seed_demo():
     for st, marks in ((achieng, [78, 71, 74, 82, 69, 80]), (baraka, [64, 58, 66, 61, 72, 55])):
         for (name, subj), m in zip(subj1.items(), marks):
             db.session.add(ExamResult(school_id=s1.id, exam_id=exam.id, student_id=st.id, subject_id=subj.id, marks=m))
+
+    exam4 = Exam(school_id=s1.id, term_id=terms1[1].id, class_id=cls1["Grade 4"].id, name="End of Term 2", max_score=100)
+    db.session.add(exam4)
+    db.session.flush()
+    for (name, subj), m in zip(subj1.items(), [88, 79, 83, 76, 91, 85]):
+        db.session.add(ExamResult(school_id=s1.id, exam_id=exam4.id, student_id=wekesa.id, subject_id=subj.id, marks=m))
 
     # Timetable (Monday & Tuesday for Grade 7)
     day = [(time(8, 0), time(9, 0), "Mathematics", None), (time(9, 0), time(10, 0), "English", None),
@@ -129,6 +148,14 @@ def seed_demo():
     db.session.add(Announcement(school_id=s1.id, author_id=admin1.id, title="Term 3 opening and fee deadline",
                                 content="Fees for Term 3 are payable by 30 September 2026. Pay via M-Pesa Paybill "
                                         "and quote the admission number.", priority="important"))
+
+    db.session.add(Announcement(school_id=s1.id, author_id=admin1.id, title="Parents' meeting", audience="parents",
+                                content="Class teachers will meet parents on Saturday 10 October, 9am to 12 noon."))
+    db.session.add(Announcement(school_id=s1.id, author_id=admin1.id, title="Grade 4 museum trip", audience="all",
+                                class_id=cls1["Grade 4"].id, priority="important",
+                                content="Grade 4 visits the National Museum on Thursday. Pack a lunch."))
+    db.session.add(Announcement(school_id=s1.id, author_id=admin1.id, title="Staff briefing", audience="teachers",
+                                content="Marks for Term 2 must be entered by Friday."))
 
     # Second school, proves isolation
     s2, _, cls2, _ = _school("Tumaini Junior School", "tumaini", "Kisumu", "TJS", "junior_secondary")

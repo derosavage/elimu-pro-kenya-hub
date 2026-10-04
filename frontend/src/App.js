@@ -16,6 +16,10 @@ import FeesAdmin from './pages/admin/Fees';
 import AnnouncementsAdmin from './pages/admin/Announcements';
 import Platform from './pages/admin/Platform';
 import Teachers from './pages/admin/Teachers';
+import Parents from './pages/admin/Parents';
+import ParentDashboard from './pages/parent/Dashboard';
+import ParentChild from './pages/parent/Child';
+import ParentAnnouncements from './pages/parent/Announcements';
 import TeacherDashboard from './pages/teacher/Dashboard';
 import TeacherClasses from './pages/teacher/Classes';
 import TeacherResults from './pages/teacher/Results';
@@ -32,10 +36,14 @@ const APPLICANT_SIDE = [{ to: '/student/application', label: 'My Application', i
 
 const ADMIN_NAV = [
   { to: '/admin', label: 'Dashboard', icon: 'home', end: true }, { to: '/admin/applications', label: 'Applications', icon: 'file' },
-  { to: '/admin/students', label: 'Students', icon: 'users' }, { to: '/admin/teachers', label: 'Teachers', icon: 'book' }, { to: '/admin/classes', label: 'Classes & Streams', icon: 'school' },
+  { to: '/admin/students', label: 'Students', icon: 'users' }, { to: '/admin/teachers', label: 'Teachers', icon: 'book' }, { to: '/admin/parents', label: 'Parents', icon: 'users' }, { to: '/admin/classes', label: 'Classes & Streams', icon: 'school' },
   { to: '/admin/fees', label: 'Fees & Payments', icon: 'wallet' }, { to: '/admin/announcements', label: 'Announcements', icon: 'bell' },
 ];
 const BURSAR_NAV = [ADMIN_NAV[0], ADMIN_NAV.find((n) => n.to === '/admin/fees')];
+const PARENT_NAV = [
+  { to: '/parent', label: 'My children', icon: 'users', end: true }, { to: '/parent/announcements', label: 'News', icon: 'bell' },
+  { to: '/parent/settings', label: 'Settings', icon: 'gear' },
+];
 const TEACHER_NAV = [
   { to: '/teacher', label: 'Home', icon: 'home', end: true }, { to: '/teacher/classes', label: 'Classes', icon: 'users' },
   { to: '/teacher/results', label: 'Results', icon: 'chart' }, { to: '/teacher/announcements', label: 'News', icon: 'bell' },
@@ -83,6 +91,7 @@ export default function App() {
             <Route path="students" element={<Students />} />
             <Route path="students/:id" element={<StudentDetail />} />
             <Route path="teachers" element={<Teachers />} />
+            <Route path="parents" element={<Parents />} />
             <Route path="classes" element={<Classes />} />
             <Route path="announcements" element={<AnnouncementsAdmin />} />
           </Route>
@@ -95,6 +104,15 @@ export default function App() {
           <Route path="classes" element={<TeacherClasses />} />
           <Route path="results" element={<TeacherResults />} />
           <Route path="announcements" element={<TeacherAnnouncements />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute roles={['parent']} />}>
+        <Route path="/parent" element={<AppShell nav={PARENT_NAV} bottom={PARENT_NAV} />}>
+          <Route index element={<ParentDashboard />} />
+          <Route path="children/:id" element={<ParentChild />} />
+          <Route path="announcements" element={<ParentAnnouncements />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Route>
 

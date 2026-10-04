@@ -1,0 +1,109 @@
+import { Navigate, Route, Routes } from 'react-router-dom';
+import ProtectedRoute from './routes/ProtectedRoute';
+import AppShell from './layouts/AppShell';
+import { useAuth, homeFor } from './context/AuthContext';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
+import Application from './pages/student/Application';
+import Dashboard from './pages/student/Dashboard';
+import { Profile, Results, Timetable, Fees, Announcements, Settings } from './pages/student/Pages';
+import AdminDashboard from './pages/admin/Dashboard';
+import { Applications, ApplicationDetail } from './pages/admin/Applications';
+import { Students, StudentDetail } from './pages/admin/Students';
+import Classes from './pages/admin/Classes';
+import FeesAdmin from './pages/admin/Fees';
+import AnnouncementsAdmin from './pages/admin/Announcements';
+import Platform from './pages/admin/Platform';
+import Teachers from './pages/admin/Teachers';
+import TeacherDashboard from './pages/teacher/Dashboard';
+import TeacherClasses from './pages/teacher/Classes';
+import TeacherResults from './pages/teacher/Results';
+import TeacherAnnouncements from './pages/teacher/Announcements';
+
+const STUDENT_NAV = [
+  { to: '/student', label: 'Home', icon: 'home', end: true }, { to: '/student/results', label: 'Results', icon: 'chart' },
+  { to: '/student/timetable', label: 'Timetable', icon: 'clock' }, { to: '/student/fees', label: 'Fees', icon: 'wallet' },
+  { to: '/student/announcements', label: 'News', icon: 'bell' },
+];
+const STUDENT_SIDE = [...STUDENT_NAV, { to: '/student/profile', label: 'My Profile', icon: 'user' },
+  { to: '/student/application', label: 'My Application', icon: 'file' }, { to: '/student/settings', label: 'Settings', icon: 'gear' }];
+const APPLICANT_SIDE = [{ to: '/student/application', label: 'My Application', icon: 'file' }, { to: '/student/settings', label: 'Settings', icon: 'gear' }];
+
+const ADMIN_NAV = [
+  { to: '/admin', label: 'Dashboard', icon: 'home', end: true }, { to: '/admin/applications', label: 'Applications', icon: 'file' },
+  { to: '/admin/students', label: 'Students', icon: 'users' }, { to: '/admin/teachers', label: 'Teachers', icon: 'book' }, { to: '/admin/classes', label: 'Classes & Streams', icon: 'school' },
+  { to: '/admin/fees', label: 'Fees & Payments', icon: 'wallet' }, { to: '/admin/announcements', label: 'Announcements', icon: 'bell' },
+];
+const BURSAR_NAV = [ADMIN_NAV[0], ADMIN_NAV.find((n) => n.to === '/admin/fees')];
+const TEACHER_NAV = [
+  { to: '/teacher', label: 'Home', icon: 'home', end: true }, { to: '/teacher/classes', label: 'Classes', icon: 'users' },
+  { to: '/teacher/results', label: 'Results', icon: 'chart' }, { to: '/teacher/announcements', label: 'News', icon: 'bell' },
+];
+
+function StudentShell() {
+  const { user } = useAuth();
+  return user.is_enrolled
+    ? <AppShell nav={STUDENT_SIDE} bottom={STUDENT_NAV} />
+    : <AppShell nav={APPLICANT_SIDE} bottom={[{ to: '/student/application', label: 'Application', icon: 'file' }, { to: '/student/settings', label: 'Settings', icon: 'gear' }]} />;
+}
+function AdminShell() {
+  const { user } = useAuth();
+  return <AppShell nav={user.role === 'bursar' ? BURSAR_NAV : ADMIN_NAV} />;
+}
+function Home() { const { user, loading } = useAuth(); return loading ? null : user ? <Navigate to={homeFor(user)} replace /> : <Landing />; }
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+
+      <Route element={<ProtectedRoute roles={['student']} />}>
+        <Route path="/student" element={<StudentShell />}>
+          <Route index element={<Dashboard />} />
+          <Route path="application" element={<Application />} />
+          <Route path="results" element={<Results />} />
+          <Route path="timetable" element={<Timetable />} />
+          <Route path="fees" element={<Fees />} />
+          <Route path="announcements" element={<Announcements />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute roles={['school_admin', 'principal', 'deputy_principal', 'bursar']} />}>
+        <Route path="/admin" element={<AdminShell />}>
+          <Route index element={<AdminDashboard />} />
+          <Route path="fees" element={<FeesAdmin />} />
+          <Route element={<ProtectedRoute roles={['school_admin', 'principal', 'deputy_principal']} />}>
+            <Route path="applications" element={<Applications />} />
+            <Route path="applications/:id" element={<ApplicationDetail />} />
+            <Route path="students" element={<Students />} />
+            <Route path="students/:id" element={<StudentDetail />} />
+            <Route path="teachers" element={<Teachers />} />
+            <Route path="classes" element={<Classes />} />
+            <Route path="announcements" element={<AnnouncementsAdmin />} />
+          </Route>
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute roles={['teacher', 'class_teacher']} />}>
+        <Route path="/teacher" element={<AppShell nav={TEACHER_NAV} bottom={TEACHER_NAV} />}>
+          <Route index element={<TeacherDashboard />} />
+          <Route path="classes" element={<TeacherClasses />} />
+          <Route path="results" element={<TeacherResults />} />
+          <Route path="announcements" element={<TeacherAnnouncements />} />
+        </Route>
+      </Route>
+
+      <Route element={<ProtectedRoute roles={['super_admin']} />}>
+        <Route path="/platform" element={<AppShell nav={[{ to: '/platform', label: 'Schools', icon: 'school', end: true }]} brandLabel="ElimuPro Platform" />}>
+          <Route index element={<Platform />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}

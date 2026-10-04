@@ -1,0 +1,14 @@
+node_modules/
+build/
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+.env.*
+!.env.example
+*.db
+.DS_Store
+.idea/
+.vscode/

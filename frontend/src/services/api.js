@@ -1,5 +1,5 @@
 // Centralised API client. The base URL comes from REACT_APP_API_URL (see .env.example).
-const BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+const BASE = (process.env.REACT_APP_API_URL || 'http://localhost:5000/api/v1').replace(/\/$/, '');
 const TOKEN_KEY = 'elimupro_token'; // only the auth token is kept client-side; all data lives in the database
 
 export class ApiError extends Error {

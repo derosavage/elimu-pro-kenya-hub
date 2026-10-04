@@ -20,4 +20,4 @@ It refuses to run if any school that is not marked demo exists. `python seed.py`
 - Parents see only children linked to them; any other student id returns 404. Parents get 403 on all staff, teacher and student endpoints.
 - Existing tests were updated for the larger seed (3 students, 3 pending applications in the overview test).
 
-Checked: `pytest -q` in backend/ = 43 passed (SQLite, not MySQL). `reset_demo.py` and a parent login/dashboard were exercised against a live local server on SQLite. Frontend `react-scripts build` compiles. Not tried in a browser.
+Checked at the time: `pytest -q` in backend/ = 43 passed (SQLite; PostgreSQL was not exercised). `reset_demo.py` and a parent login/dashboard were exercised against a live local server on SQLite. Frontend `react-scripts build` compiles. Not tried in a browser.

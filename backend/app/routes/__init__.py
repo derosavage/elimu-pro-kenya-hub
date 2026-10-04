@@ -9,4 +9,6 @@ def register_blueprints(app):
     from .teachers import bp as teachers
     from .parents import bp as parents
     for bp in (auth, schools, admissions, students, academics, finance, announcements, teachers, parents):
-        app.register_blueprint(bp)
+        versioned_prefix = bp.url_prefix.replace("/api", "/api/v1", 1)
+        app.register_blueprint(bp, url_prefix=versioned_prefix, name=f"{bp.name}_v1")
+        app.register_blueprint(bp, name=f"{bp.name}_legacy")

@@ -1,5 +1,7 @@
-"""Regenerate ../database/schema.sql from the SQLAlchemy models (MySQL dialect)."""
-from sqlalchemy.dialects import mysql
+"""Regenerate database/schema.sql from the SQLAlchemy models (PostgreSQL dialect)."""
+from pathlib import Path
+
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.schema import CreateTable, CreateIndex
 
 from app import create_app
@@ -8,14 +10,14 @@ from app.extensions import db
 
 app = create_app(TestConfig)
 with app.app_context():
-    out = ["-- ElimuPro MySQL schema (generated from backend/app/models by export_schema.py)",
-           "-- Create the database first:  CREATE DATABASE elimupro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;",
-           "SET FOREIGN_KEY_CHECKS = 0;", ""]
+    out = ["-- ElimuPro PostgreSQL schema (generated from backend/app/models by export_schema.py)", ""]
     for t in db.metadata.sorted_tables:
-        out.append(str(CreateTable(t).compile(dialect=mysql.dialect())).strip() + " ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;")
+        table_sql = str(CreateTable(t).compile(dialect=postgresql.dialect())).strip()
+        out.append("\n".join(line.rstrip() for line in table_sql.splitlines()) + ";")
         for ix in t.indexes:
-            out.append(str(CreateIndex(ix).compile(dialect=mysql.dialect())).strip() + ";")
+            index_sql = str(CreateIndex(ix).compile(dialect=postgresql.dialect())).strip()
+            out.append("\n".join(line.rstrip() for line in index_sql.splitlines()) + ";")
         out.append("")
-    out.append("SET FOREIGN_KEY_CHECKS = 1;")
-    open("../database/schema.sql", "w").write("\n".join(out) + "\n")
+    output_path = Path(__file__).resolve().parent.parent / "database" / "schema.sql"
+    output_path.write_text("\n".join(out).rstrip() + "\n", encoding="utf-8")
     print(len(db.metadata.sorted_tables), "tables written")

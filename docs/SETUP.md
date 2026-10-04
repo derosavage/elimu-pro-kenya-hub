@@ -1,48 +1,50 @@
-# Setup guide (local computer)
+# Local setup
 
-## 1. Install prerequisites
-- Python 3.10+ (`python --version`), Node.js 18+ (`node --version`), MySQL 8 or MariaDB.
+## Prerequisites
+Python 3.10+, Node.js 18+, and PostgreSQL 15+ are required. Docker Desktop can provide PostgreSQL and run the full stack instead.
 
-## 2. Create the database
-```sql
-CREATE DATABASE elimupro CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+## PostgreSQL
+Create an empty local database, for example with `createdb elimupro`. Apply the committed schema revisions from `backend/` after configuring the environment:
+
+```bash
+flask --app run:app db upgrade
 ```
-Load the tables: `mysql -u USER -p elimupro < database/schema.sql`
-(Alternatively `db.create_all()` runs automatically when you execute `python seed.py`.)
-`database/schema.sql` is generated from the models: after changing a model run `python export_schema.py` inside `backend/`.
-There is no migration tool yet; for schema changes on a live database, write manual `ALTER TABLE` statements.
 
-## 3. Backend
+`database/schema.sql` is a generated PostgreSQL reference, not the production migration mechanism. After changing models, create and review a revision with `flask --app run:app db migrate -m "describe change"` and commit the resulting file under `backend/migrations/versions/`.
+
+## Backend
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-cp .env.example .env
+cp .env.example .env             # Windows: Copy-Item .env.example .env
 ```
-Edit `.env`:
-- `SECRET_KEY`, `JWT_SECRET_KEY`: long random strings (`python -c "import secrets; print(secrets.token_hex(32))"`)
-- `DATABASE_URL=mysql+pymysql://USER:PASSWORD@localhost/elimupro` (URL-encode special characters in the password)
-- `FRONTEND_URL=http://localhost:3000`
 
-Load demo data (only into an empty database): `python seed.py`. Start: `python run.py` → http://localhost:5000/api/health
+Set distinct random `SECRET_KEY` and `JWT_SECRET_KEY` values (at least 32 characters), and update `DATABASE_URL` to your PostgreSQL database. For local PostgreSQL use `postgresql+psycopg://USER:PASSWORD@localhost:5432/elimupro`; URL-encode special characters in credentials. Set `FRONTEND_URL=http://localhost:3000`.
 
-## 4. Frontend
+Run `flask --app run:app db upgrade`, then optionally load demo data into a fresh development database with `python seed.py`. Start the API with `python run.py`; liveness is at `http://localhost:5000/api/v1/health` and database readiness is at `http://localhost:5000/api/v1/health/ready`.
+
+## Frontend
 ```bash
 cd frontend
-cp .env.example .env      # REACT_APP_API_URL=http://localhost:5000/api
-npm install
-npm start                 # http://localhost:3000
+cp .env.example .env
+npm ci
+npm start
 ```
 
-## 5. Tests
-`cd backend && pytest -q` (uses in-memory SQLite, needs no MySQL).
+The frontend runs at `http://localhost:3000`; its default API URL is `http://localhost:5000/api/v1`.
+
+## Docker
+From the repository root, copy `.env.example` to `.env`, replace all development-only secrets, and run `docker compose up --build`. The app is served at `http://localhost:8080`; Compose starts PostgreSQL, applies migrations once, then starts Flask and Nginx.
+
+## Tests
+From `backend/`, run `python -m pytest -q`. Tests use in-memory SQLite and do not require PostgreSQL credentials.
 
 ## Troubleshooting
-- **"Missing required environment variable"**: `backend/.env` is missing or a value is empty.
-- **CORS error in the browser console**: `FRONTEND_URL` must exactly match the frontend origin (scheme, host, port); restart the backend.
-- **"Cannot reach the server"**: backend not running or `REACT_APP_API_URL` wrong; restart `npm start` after editing `.env`.
-- **`Access denied for user` / cannot connect**: check `DATABASE_URL`, that MySQL is running and the database exists.
-- **`cryptography` / `bcrypt` install errors**: upgrade pip (`pip install -U pip`) and use Python 3.10+.
-- **Seed says database already contains schools**: intentional safety check; use an empty database.
+- **Missing environment variable or weak secret**: create `backend/.env` from `backend/.env.example`; use two distinct secrets of at least 32 characters.
+- **CORS error**: `FRONTEND_URL` must exactly match the browser-visible origin, including scheme, host, and port.
+- **Cannot reach API**: verify `REACT_APP_API_URL` and restart the frontend after changing its environment file.
+- **PostgreSQL connection error**: verify the database URL, network access, TLS requirements, and percent-encoding of username/password characters.
+- **Seed reports existing schools**: intentional safety check; use a fresh development database.
 - **Signup shows no schools**: no active school with admissions open exists; log in as super admin and create one.

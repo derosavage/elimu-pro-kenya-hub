@@ -1,9 +1,14 @@
-# API reference (base path `/api`, JSON)
+# API reference (base path `/api/v1`, JSON)
+
+`/api` remains available as a compatibility alias. New clients should use `/api/v1`.
 
 Success: `{"success": true, "data": ..., "message"?: ..., "meta"?: {page, per_page, total, pages}}`.
 Error: `{"success": false, "message": "...", "errors"?: {field: message}}` with 400/401/403/404/409/422/503.
 Send `Authorization: Bearer <token>`. The role and school always come from the database user, never from the request.
 Other schools' record IDs return **404**.
+
+## Health
+GET `/health` is a liveness check. GET `/health/ready` checks the database connection and returns 503 when it is unavailable.
 
 ## Auth
 | Method & path | Who | Notes |

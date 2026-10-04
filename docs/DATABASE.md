@@ -1,6 +1,8 @@
 # Database
 
-Generated from `backend/app/models/` into `database/schema.sql` (21 tables, InnoDB, utf8mb4). No attendance tables exist.
+PostgreSQL schema generated from `backend/app/models/` into `database/schema.sql` (21 tables). No attendance tables exist.
+
+Use Flask-Migrate for database changes: run `flask --app run:app db upgrade` from `backend/` to apply committed revisions. Generate a new revision after model changes with `flask --app run:app db migrate -m "describe change"`, review it, then commit it. `python export_schema.py` refreshes the reference SQL; do not use it as a production migration mechanism.
 
 | Group | Tables |
 |---|---|

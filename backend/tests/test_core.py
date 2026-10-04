@@ -1,6 +1,11 @@
+import pytest
+
+from app import create_app
 from app.extensions import db
 from app.models import User, Student, StudentApplication, School
+from app.config import TestConfig, normalize_database_url
 from conftest import login
+from sqlalchemy.exc import SQLAlchemyError
 
 
 def signup(client, school_id, email="newlearner@example.com", **over):
@@ -13,6 +18,56 @@ def signup(client, school_id, email="newlearner@example.com", **over):
 COMPLETE = {"date_of_birth": "2013-03-02", "gender": "male", "nationality": "Kenyan", "county": "Bungoma",
             "guardian_name": "Jane Barasa", "guardian_relationship": "Mother", "guardian_phone": "0722111222",
             "emergency_contact_name": "Jane Barasa", "emergency_contact_phone": "0722111222"}
+
+
+def test_postgres_database_urls_use_psycopg_driver():
+    assert str(normalize_database_url("postgres://user:pass@localhost/db")) == (
+        "postgresql+psycopg://user:pass@localhost/db"
+    )
+    assert str(normalize_database_url("postgresql://user:pass@localhost/db?sslmode=require")) == (
+        "postgresql+psycopg://user:pass@localhost/db?sslmode=require"
+    )
+
+
+def test_production_config_requires_distinct_strong_secrets():
+    class WeakSecretConfig(TestConfig):
+        TESTING = False
+        SECRET_KEY = "short"
+
+    class ReusedSecretConfig(TestConfig):
+        TESTING = False
+        SECRET_KEY = "x" * 32
+        JWT_SECRET_KEY = "x" * 32
+
+    with pytest.raises(RuntimeError, match="at least 32 characters"):
+        create_app(WeakSecretConfig)
+    with pytest.raises(RuntimeError, match="must be different"):
+        create_app(ReusedSecretConfig)
+
+
+def test_versioned_api_and_legacy_alias(client, student):
+    health = client.get("/api/v1/health", headers={"Origin": TestConfig.FRONTEND_URL})
+    assert health.get_json()["data"]["status"] == "ok"
+    assert health.headers["Access-Control-Allow-Origin"] == TestConfig.FRONTEND_URL
+    assert client.get("/api/v1/health/ready").status_code == 200
+    assert client.get("/api/health").get_json()["data"]["status"] == "ok"
+    versioned = client.get("/api/v1/students/me", headers=student)
+    legacy = client.get("/api/students/me", headers=student)
+    assert versioned.status_code == legacy.status_code == 200
+    registered = {rule.rule for rule in client.application.url_map.iter_rules()}
+    legacy_paths = {path for path in registered if path.startswith("/api/") and not path.startswith("/api/v1/")}
+    assert legacy_paths
+    assert all(path.replace("/api/", "/api/v1/", 1) in registered for path in legacy_paths)
+
+
+def test_database_readiness_returns_503_when_database_is_unavailable(client, monkeypatch):
+    def raise_database_error(*args, **kwargs):
+        raise SQLAlchemyError("database unavailable")
+
+    monkeypatch.setattr(db.session, "execute", raise_database_error)
+    response = client.get("/api/v1/health/ready")
+    assert response.status_code == 503
+    assert response.get_json()["message"] == "Database unavailable"
 
 
 # ---------------- authentication ----------------

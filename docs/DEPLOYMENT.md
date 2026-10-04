@@ -1,26 +1,28 @@
-# Deployment notes
+# Deployment guide
 
-Nothing in this project has been deployed by the author of this package. These are the intended steps.
+## Architecture
+Use Vercel for the React frontend and Supabase for managed PostgreSQL. Supabase is the database platform; it does not run this Flask/WSGI application. Deploy the Flask container to a container runtime such as Render, Railway, Fly.io, or Cloud Run, and configure it to connect to Supabase.
 
-## Backend on AlwaysData (Flask + MySQL)
-1. Create a MySQL database in the AlwaysData panel and import `database/schema.sql` (phpMyAdmin or `mysql` client).
-2. Upload `backend/` (Git or SFTP), create a virtualenv and `pip install -r requirements.txt`.
-3. Add a **WSGI site**: application path `run:app` (module `run.py`, object `app`), pointing at your virtualenv.
-4. Set environment variables in the site configuration: `SECRET_KEY`, `JWT_SECRET_KEY`, `DATABASE_URL`
-   (`mysql+pymysql://user:pass@mysql-ACCOUNT.alwaysdata.net/ACCOUNT_elimupro`), `FRONTEND_URL` (your Vercel URL, no trailing slash).
-5. Create the first super admin and school **without demo data**, for example in a Flask shell:
-   create a `User(role="super_admin", school_id=None, ...)` and call `set_password(...)`. Do not run `seed.py` in production.
+## Supabase PostgreSQL
+1. Create a Supabase project and copy its PostgreSQL connection URI. Use the direct connection when the runtime supports its network requirements, otherwise choose the appropriate Supabase pooler connection mode.
+2. Configure the backend `DATABASE_URL` with that URI and `sslmode=require`. The application normalizes `postgres://` and `postgresql://` URIs to the installed psycopg 3 driver.
+3. Configure `SECRET_KEY` and `JWT_SECRET_KEY` as different random values of at least 32 characters, and set `FRONTEND_URL` to the exact Vercel origin.
+4. Run `flask --app run:app db upgrade` as a release/migration step from the `backend/` directory before routing traffic to the new version. Do not use demo seed scripts in production.
+
+The schema migration creates PostgreSQL tables; it does not transfer rows from an existing MySQL database. If production data already exists, take a verified backup, transform/export/import it into PostgreSQL, and reconcile row counts and key relationships before switching traffic.
+
+## Flask API container
+Build from `backend/Dockerfile`. Set the runtime start command to the image default, which runs Gunicorn on port `5000`. Configure the platform health check to `GET /api/v1/health/ready`; this returns success only when the database is reachable. Use a platform-managed secret store for credentials and keep database network access restricted to the backend runtime.
 
 ## Frontend on Vercel
-1. Import the repo, set **Root Directory** to `frontend`, framework preset "Create React App".
-2. Set `REACT_APP_API_URL` to `https://YOUR-BACKEND/api`. `vercel.json` already rewrites all routes to `index.html`.
-3. Serve everything over HTTPS (required for PWA install and service workers).
+1. Import the repository and set **Root Directory** to `frontend` with the Create React App preset.
+2. Set `REACT_APP_API_URL` to `https://YOUR-BACKEND/api/v1` for the Production, Preview, and Development environments as appropriate.
+3. `vercel.json` rewrites client-side routes to `index.html`. Set the backend CORS `FRONTEND_URL` to the exact deployed origin and use HTTPS.
 
-## M-Pesa (Daraja) - NOT live-tested
-Set `MPESA_CONSUMER_KEY`, `MPESA_CONSUMER_SECRET`, `MPESA_SHORTCODE`, `MPESA_PASSKEY`, `MPESA_CALLBACK_URL` (and `MPESA_ENV=production` for live).
-`POST /api/payments/mpesa/stk-push` will then call Daraja. **Still to build before real use:** a public callback endpoint that verifies the
-Safaricom result, matches it to the request, creates the `Payment` (idempotently) and issues a receipt. Until then, record payments manually.
+## Docker Compose
+For local full-stack runs, copy the root `.env.example` to `.env`, change its development-only values, and run `docker compose up --build`. Compose provides local PostgreSQL, runs migrations once before the API, and serves the app through Nginx at `http://localhost:8080`. Production Supabase deployments should use the platform's PostgreSQL URI and release migration step instead of the Compose database service.
 
-## Before going live checklist
-Strong random secrets · HTTPS only · no demo data · database backups · rate limiting on `/api/auth/*` (not implemented) ·
-password reset flow (not implemented) · review CORS origin · run the tests against MySQL.
+## M-Pesa and launch checklist
+Daraja STK Push has not been live-tested. Before accepting real payments, implement and verify an idempotent public callback that validates Safaricom results, associates them with the request, records payments, and issues receipts. Until then, payments must be recorded manually.
+
+Before launch, use HTTPS, strong distinct secrets, production CORS origins, database backups, no demo data, monitoring, and a rollback plan. Rate limiting and password reset are not implemented; run the automated suite before each release. The parent/student/teacher business-flow suite uses SQLite; a live PostgreSQL smoke test is still required in the target environment.

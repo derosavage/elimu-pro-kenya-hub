@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Logo from './Logo';
+import { HeroMedia } from './Media';
 gsap.registerPlugin(ScrollTrigger);
 
 // All figures are illustrative sample data.
@@ -50,6 +51,7 @@ export default function Walkthrough({ signup }) {
       const tl = gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: root, start: 'top top', end: '+=500%', pin: true, scrub: 0.6, anticipatePin: 1, invalidateOnRefresh: true } });
       const right = () => W() * 0.64 - 160;
       tl.to(q('.lp-hero-txt'), { autoAlpha: 0, x: 80, duration: 1.2, ease: 'power2.inOut' }, 0.3)
+        .to(q('.lp-hero-media'), { opacity: 0.45, duration: 1.4, ease: 'power2.inOut' }, 0.3)
         .to(q('.lp-pk-move'), { x: right, rotateY: -22, rotateX: 6, scale: 1.1, duration: 2, ease: 'power2.inOut' }, 0.4)
         .to(q('.lp-cards'), { x: right, duration: 2, ease: 'power2.inOut' }, 0.4)
         .to(q('.lp-ly-f'), { z: 140, y: -26, duration: 1.6, ease: 'power2.out' }, 1)
@@ -84,6 +86,7 @@ export default function Walkthrough({ signup }) {
 
   return (
     <section className="lp-wt" ref={ref} id="roles" aria-label="ElimuPro walkthrough">
+      <HeroMedia />
       <div className="lp-hero-txt">
         <p className="lp-pill">Built for Kenyan schools</p>
         <h1>The smarter way to manage your school.</h1>

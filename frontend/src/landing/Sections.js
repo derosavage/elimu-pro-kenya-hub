@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MEDIA, Photo } from './Media';
 
 const P = {
   user: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 20c0-4 4-6 8-6s8 2 8 6', book: 'M4 5h6a2 2 0 012 2v12a2 2 0 00-2-2H4zM20 5h-6a2 2 0 00-2 2v12a2 2 0 012-2h6z',
@@ -25,8 +26,10 @@ const STEPS = [
 export function Features() {
   return (
     <section className="lp-sec" id="features">
-      <p className="lp-eyebrow">Complete school operations</p>
-      <h2>Everything works better together</h2>
+      <div className="lp-fhead">
+        <div><p className="lp-eyebrow">Complete school operations</p><h2>Everything works better together</h2></div>
+        <Photo item={MEDIA.features} />
+      </div>
       <div className="lp-fgrid">
         {FEATURES.map(([i, t, d]) => <div key={t}><span className="lp-fic"><Ic n={i} /></span><h3>{t}</h3><p>{d}</p></div>)}
       </div>
@@ -50,6 +53,7 @@ export function Rollout() {
           ))}
         </div>
         <div className="lp-rpanel" key={s} aria-live="polite">
+          <Photo item={MEDIA.rollout[s]} className="lp-rphoto" />
           <span className="lp-ricon"><Ic n={icon} /></span>
           <p className="lp-eyebrow">Step {s + 1}</p>
           <h3>{head}</h3><p>{text}</p>

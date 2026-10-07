@@ -3,8 +3,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import AppShell from './layouts/AppShell';
 import { useAuth, homeFor } from './context/AuthContext';
 import Landing from './pages/Landing';
-import Login from './pages/Login';
-import Signup from './pages/Signup';
+import AuthBook from './pages/AuthBook';
 import Application from './pages/student/Application';
 import Dashboard from './pages/student/Dashboard';
 import { Profile, Results, Timetable, Fees, Announcements, Settings } from './pages/student/Pages';
@@ -65,8 +64,12 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/signup" element={<Signup />} />
+      {/* /login and /signup share one persistent "open book" layout (AuthBook renders Login and Signup itself)
+          so the page-turn can animate between them. Paths are unchanged. */}
+      <Route element={<AuthBook />}>
+        <Route path="/login" element={null} />
+        <Route path="/signup" element={null} />
+      </Route>
 
       <Route element={<ProtectedRoute roles={['student']} />}>
         <Route path="/student" element={<StudentShell />}>

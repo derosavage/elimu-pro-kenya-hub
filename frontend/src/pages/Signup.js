@@ -50,44 +50,39 @@ export default function Signup() {
   };
 
   return (
-    <div className="public">
-      <header><Link to="/" className="brand">Elimu<b>Pro</b></Link></header>
-      <div className="narrow">
-        <div className="card auth-card">
-          <h1>Create your student account</h1>
-          <p className="muted">Step {step} of 2. After this you will complete your admission application.</p>
-          <div className="steps" aria-hidden="true"><div className="on" /><div className={step === 2 ? 'on' : ''} /></div>
-          <Alert type="error">{msg}</Alert>
-          {loading && <Loading />}
-          {error && <ErrorState error={error} onRetry={reload} />}
-          {!loading && !error && (
-            <form onSubmit={submit} noValidate>
-              {step === 1 ? (
-                <>
-                  <div className="grid2">
-                    <Field label="First name" name="first_name" required value={f.first_name} onChange={set('first_name')} error={errs.first_name} autoComplete="given-name" />
-                    <Field label="Middle name" name="middle_name" value={f.middle_name} onChange={set('middle_name')} />
-                  </div>
-                  <Field label="Last name" name="last_name" required value={f.last_name} onChange={set('last_name')} error={errs.last_name} autoComplete="family-name" />
-                  <Field label="Email" name="email" type="email" required value={f.email} onChange={set('email')} error={errs.email} autoComplete="email" />
-                  <Field label="Phone number" name="phone" type="tel" required value={f.phone} onChange={set('phone')} error={errs.phone} placeholder="0712 345 678" autoComplete="tel" />
-                  <Button block type="button" onClick={next}>Continue</Button>
-                </>
-              ) : (
-                <>
-                  <Field as="select" label="Your school" name="school_id" required value={f.school_id} onChange={set('school_id')} error={errs.school_id}
-                    options={(schools || []).map((s) => ({ value: s.id, label: `${s.name}${s.county ? ` (${s.county})` : ''}` }))} />
-                  {schools && schools.length === 0 && <Alert>No schools are accepting applications yet.</Alert>}
-                  <Field label="Password" name="password" type="password" required value={f.password} onChange={set('password')} error={errs.password} autoComplete="new-password" />
-                  <Field label="Confirm password" name="confirm" type="password" required value={f.confirm} onChange={set('confirm')} error={errs.confirm} autoComplete="new-password" />
-                  <div className="row"><Button type="button" variant="secondary" onClick={() => setStep(1)}>Back</Button><div className="grow"><Button block type="submit" loading={busy}>Create account</Button></div></div>
-                </>
-              )}
-            </form>
-          )}
-          <p className="small muted" style={{ marginTop: '1rem' }}>Already have an account? <Link to="/login">Log in</Link></p>
-        </div>
-      </div>
-    </div>
+    <>
+    <h1>Create your student account</h1>
+    <p className="muted">Step {step} of 2. After this you will complete your admission application.</p>
+    <div className="steps" aria-hidden="true"><div className="on" /><div className={step === 2 ? 'on' : ''} /></div>
+    <Alert type="error">{msg}</Alert>
+    {loading && <Loading />}
+    {error && <ErrorState error={error} onRetry={reload} />}
+    {!loading && !error && (
+      <form onSubmit={submit} noValidate>
+        {step === 1 ? (
+          <>
+            <div className="grid2">
+              <Field label="First name" name="first_name" required value={f.first_name} onChange={set('first_name')} error={errs.first_name} autoComplete="given-name" />
+              <Field label="Middle name" name="middle_name" value={f.middle_name} onChange={set('middle_name')} />
+            </div>
+            <Field label="Last name" name="last_name" required value={f.last_name} onChange={set('last_name')} error={errs.last_name} autoComplete="family-name" />
+            <Field label="Email" name="email" type="email" required value={f.email} onChange={set('email')} error={errs.email} autoComplete="email" />
+            <Field label="Phone number" name="phone" type="tel" required value={f.phone} onChange={set('phone')} error={errs.phone} placeholder="0712 345 678" autoComplete="tel" />
+            <Button block type="button" onClick={next}>Continue</Button>
+          </>
+        ) : (
+          <>
+            <Field as="select" label="Your school" name="school_id" required value={f.school_id} onChange={set('school_id')} error={errs.school_id}
+              options={(schools || []).map((s) => ({ value: s.id, label: `${s.name}${s.county ? ` (${s.county})` : ''}` }))} />
+            {schools && schools.length === 0 && <Alert>No schools are accepting applications yet.</Alert>}
+            <Field label="Password" name="password" type="password" required value={f.password} onChange={set('password')} error={errs.password} autoComplete="new-password" />
+            <Field label="Confirm password" name="confirm" type="password" required value={f.confirm} onChange={set('confirm')} error={errs.confirm} autoComplete="new-password" />
+            <div className="row"><Button type="button" variant="secondary" onClick={() => setStep(1)}>Back</Button><div className="grow"><Button block type="submit" loading={busy}>Create account</Button></div></div>
+          </>
+        )}
+      </form>
+    )}
+    <p className="small muted" style={{ marginTop: '1rem' }}>Already have an account? <Link to="/login">Log in</Link></p>
+    </>
   );
 }

@@ -22,21 +22,16 @@ export default function Login() {
   };
 
   return (
-    <div className="public">
-      <header><Link to="/" className="brand">Elimu<b>Pro</b></Link></header>
-      <div className="narrow">
-        <div className="card auth-card">
-          <h1>Welcome back</h1>
-          <p className="muted">Log in to your ElimuPro account.</p>
-          <Alert type="error">{error}</Alert>
-          <form onSubmit={submit} noValidate>
-            <Field label="Email" name="email" type="email" autoComplete="username" required value={form.email} onChange={set('email')} />
-            <Field label="Password" name="password" type="password" autoComplete="current-password" required value={form.password} onChange={set('password')} />
-            <Button block loading={busy} type="submit">Log in</Button>
-          </form>
-          <p className="small muted" style={{ marginTop: '1rem' }}>New student? <Link to="/signup">Create an account and apply</Link></p>
-        </div>
-      </div>
-    </div>
+    <>
+    <h1>Welcome back</h1>
+    <p className="muted">Log in to your ElimuPro account.</p>
+    <Alert type="error">{error}</Alert>
+    <form onSubmit={submit} noValidate>
+      <Field label="Email" name="email" type="email" autoComplete="username" required value={form.email} onChange={set('email')} />
+      <Field label="Password" name="password" type="password" autoComplete="current-password" required value={form.password} onChange={set('password')} />
+      <Button block loading={busy} type="submit">Log in</Button>
+    </form>
+    <p className="small muted" style={{ marginTop: '1rem' }}>New student? <Link to="/signup">Create an account and apply</Link></p>
+    </>
   );
 }

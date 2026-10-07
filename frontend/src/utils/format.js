@@ -6,7 +6,7 @@ export const greeting = () => {
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 };
 export const STATUS = {
-  draft: ['Draft', ''], submitted: ['Submitted', 'blue'], under_review: ['Under review', 'gold'],
+  draft: ['Draft', ''], submitted: ['Submitted', 'blue'], under_review: ['Under review', 'warning'],
   changes_required: ['Changes required', 'red'], approved: ['Approved', 'green'], rejected: ['Rejected', 'red'],
   enrolled: ['Enrolled', 'green'],
 };

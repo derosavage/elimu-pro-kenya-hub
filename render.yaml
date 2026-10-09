@@ -20,7 +20,7 @@ services:
           name: elimupro-db
           property: connectionString
       - key: FRONTEND_URL
-        value: https://elimu-pro-kenya-hub.vercel.app
+        value: https://elimu-pro-kenya-hub-juqh.vercel.app,https://elimupro.co.ke
       - key: JWT_ACCESS_HOURS
         value: "12"
 
